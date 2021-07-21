@@ -1,19 +1,19 @@
 MSG
-Welcome to the alpha2 of the Story Based Game Interpreter. This game session will be short. This is a tech demo.
+It's year 2042. You are in your apartment. It's raither small apartment.
 MSG
-Danged. Virus detected!
+Virus detected!
 QST
-Aswer the question. Is this the best game ever? [1-Yes!] [2-No] or [3-Close],7,11,15
+Aswer the question. Is this the best game ever?,Yes it is!,No,I don't know..,7,11,15
 MSG
 You choosed Yes! This is the right answer. The virus was removed!
 JMP
 19
 MSG
-You choosed No! Virus deletes all important files... System will halt.
+You choosed No!
 JMP
 23
 MSG
-You didn't answer... Virus is still in the system.
+You didn't know what to choose... Virus is still in the system.
 JMP
 5
 MSG
@@ -23,4 +23,5 @@ JMP
 MSG
 You lose...
 END
-Thanks for playing the game :)
+GAME OVER Thanks for playing the game :)
+
