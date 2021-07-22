@@ -35,7 +35,7 @@ DECLARE SUB DrawCustomLine (x!, y!, size!, char!)
 ' Developed by Krzysztof Krystian Janowski
 ' https://bits.p1x.in
 '
-' Version 3 - 28/06/2021
+' Version 5 - 22/07/2021
 ' -------------------------------------------------------------------- '
 
 
