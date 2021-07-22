@@ -20,8 +20,8 @@ MSG
 Congratulation! You win the game!
 JMP
 25
-MSG
-You lose...
+QST
+You lose... Do you want another chance?,Yes,No! Game sucks",,5,25,0
 END
 GAME OVER Thanks for playing the game :)
 
