@@ -1,0 +1,27 @@
+MSG
+It's year 2042. You are in your apartment. It's raither small apartment.
+MSG
+Virus detected!
+QST
+Aswer the question. Is this the best game ever?,Yes it is!,No,I don't know..,7,11,15
+MSG
+You choosed Yes! This is the right answer. The virus was removed!
+JMP
+19
+MSG
+You choosed No!
+JMP
+23
+MSG
+You didn't know what to choose... Virus is still in the system.
+JMP
+5
+MSG
+Congratulation! You win the game!
+JMP
+25
+QST
+You lose... Do you want another chance?,Yes,No! Game sucks",,5,25,0
+END
+GAME OVER Thanks for playing the game :)
+
