@@ -9,12 +9,12 @@ My game engine for text-based games. It uses super simple script language for th
 
 ## ChangeLog
 
-1.0 - initial logic w/ scritp parser
-2.0 -> 4.0 - refctors, proper sound handling, menu
-5-0 - intro w/ 3D model, word-wrapping
-6.0 - optimalizations, color palette
+- 1.0 - initial logic w/ scritp parser
+- 2.0 -> 4.0 - refctors, proper sound handling, menu
+- 5-0 - intro w/ 3D model, word-wrapping
+- 6.0 - optimalizations, color palette
 
 ## Planned
 
-7.0 - refactor draw window
-8.0 - window effects
+- 7.0 - refactor draw window
+- 8.0 - window effects
