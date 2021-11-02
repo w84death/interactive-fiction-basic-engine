@@ -1,4 +1,10 @@
-DECLARE SUB DrawP1XLogo ()
+DECLARE SUB HandleState ()
+DECLARE SUB DrawPalette ()
+DECLARE SUB DrawFakeRoom (c!, T!, position!)
+DECLARE SUB fxASCIINoise ()
+DECLARE SUB HandleUserAnswer ()
+DECLARE SUB fxNoise (dT!)
+DECLARE SUB DrawP1XLogo (T!)
 DECLARE SUB Init2DSprite ()
 DECLARE SUB Init3DModel ()
 DECLARE SUB TrimMsg (m$)
@@ -16,7 +22,6 @@ DECLARE SUB RandomizeSound (bank!)
 DECLARE SUB InitSound ()
 DECLARE SUB PlayTune ()
 DECLARE SUB DrawScene ()
-DECLARE SUB fxNoise ()
 DECLARE SUB LoadTunes ()
 DECLARE SUB DrawBottomBar ()
 DECLARE SUB DrawBackground (character!)
@@ -35,7 +40,8 @@ DECLARE SUB DrawCustomLine (x!, y!, size!, char!)
 ' Developed by Krzysztof Krystian Janowski
 ' https://bits.p1x.in
 '
-' Version 5 - 22/07/2021
+' Unnamed Game Project
+' Version 6 - 24/07/2021
 ' -------------------------------------------------------------------- '
 
 
@@ -46,6 +52,7 @@ CONST STATEMENU = 1
 CONST STATEGAME = 2
 CONST STATEOUTRO = 3
 CONST STATEQUIT = 4
+CONST STATEPALETTE = 5
 
 CONST CMDQST = 1
 CONST CMDMSG = 0
@@ -71,7 +78,7 @@ TYPE settings
   qstPosY AS INTEGER
 END TYPE
 DIM SHARED app AS settings
-app.version = 5
+app.version = 6
 app.bgColor = 3
 app.mainColor = 10
 app.secondaryColor = 11
@@ -82,7 +89,7 @@ app.maxWidth = 320
 app.maxHeight = 200
 app.centerX = INT(app.cols / 2)
 app.centerY = INT(app.rows / 2)
-app.turnTime = 10
+app.turnTime = 20
 app.soundEnabled = 1
 app.state = STATINTRO
 
@@ -112,7 +119,7 @@ TYPE soundsystem
  note AS INTEGER
 END TYPE
 DIM SHARED sfx AS soundsystem
-DIM SHARED sounds(5)
+DIM SHARED sounds(16)
 InitSound
 
 DIM SHARED x(20), y(20), z(20)
@@ -124,16 +131,25 @@ Init3DModel
 DIM SHARED sprite(16, 22)
 Init2DSprite
 
+DIM SHARED chars(78) AS INTEGER
+chars(0) = 179
+chars(1) = 180
+chars(2) = 191
+chars(3) = 192
+chars(4) = 193
+chars(5) = 194
+chars(6) = 195
+chars(7) = 196
+chars(8) = 197
+
 turnTimer = 1
 
 ' Start of the program
 ' -------------------------------------------------------------------- '
 
 SCREEN 13
-COLOR 3
+COLOR 0
 CLS
-DrawBackground 219
-
 CheckSaveGame
 
 ' Main loop
@@ -144,24 +160,22 @@ DO
         ' New tune requested, randomize and init play
         HandleSound
 
-        
         ' Timer for turn delay
         IF turnTimer > 0 THEN
           IF app.state = STATEGAME THEN
-            fxNoise
-            fxFall
+            'fxNoise 1
+            'fxFall
           END IF
           turnTimer = turnTimer - 1
           IF turnTimer = 0 THEN
-            HandleTurn
+            HandleState
             PlaySound
           END IF
         END IF
-                
        
         IF turnTimer < 1 AND (g$ <> "" OR cnc.cmd = "JMP") THEN
-                turnTimer = app.turnTime
-                PlaySound
+          turnTimer = app.turnTime
+          PlaySound
         END IF
 
         WAIT &H3DA, 8
@@ -228,12 +242,12 @@ DATA 1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,1
 DATA 1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,1
 
 SUB CheckSaveGame
-
+ 
   OPEN "save.dat" FOR INPUT AS #2
-  INPUT #2, lastScene$
-  app.scene = VAL(lastScene$)
+  INPUT #2, lastScene%
+  app.scene = lastScene%
   CLOSE #2
-
+  
 END SUB
 
 SUB DrawBackground (character)
@@ -274,6 +288,46 @@ SUB DrawCustomLine (x, y, size, char)
 
 END SUB
 
+SUB DrawFakeRoom (c, T, position)
+
+    bgX = 100 + SIN(T * .5) * 10
+    bgY = 66 + COS(T * .25) * 4 + position * 4
+    bgW = 120
+    bgH = 60
+    bgT = 14
+    bgB = 180
+   
+    shade = 0
+    IF c > 0 THEN shade = -6
+
+    'cross lines
+    LINE (bgX, bgY)-(0, bgT), c
+    LINE (bgX + bgW, bgY)-(320, bgT), c
+    LINE (bgX, bgY + bgH)-(0, bgB), c
+    LINE (bgX + bgW, bgY + bgH)-(320, bgB), c + shade
+    
+    'fill lines
+    FOR i = 0 TO 1 STEP 1 / 16
+      LINE (bgX, bgY + bgH * i)-(0, bgT + ((bgB - bgT) * i)), c
+      LINE (bgX + bgW, bgY + bgH * i)-(320, bgT + ((bgB - bgT) * i)), c + shade
+      LINE (bgX + bgW * i, bgY)-(320 * i, bgT), c
+      LINE (bgX + bgW * i, bgY + bgH)-(320 * i, bgB), c + shade
+    NEXT i
+
+    'box
+    ix = 0
+    iy = 0
+    ar = (bgW / bgH) * .75
+    FOR i = 0 TO 6
+      ix = i + ix * ar
+      iy = i + iy * ar
+      LINE (bgX - ix, bgY - iy)-(bgX - ix, bgY + bgH + iy), c
+      LINE (bgX + bgW + ix, bgY - iy)-(bgX + bgW + ix, bgY + bgH + iy), c + shade
+      LINE (bgX - ix, bgY - iy)-(bgX + bgW + ix, bgY - iy), c
+      LINE (bgX - ix, bgY + bgH + iy)-(bgX + bgW + ix, bgY + bgH + iy), c + shade
+    NEXT i
+END SUB
+
 SUB DrawIntro
 
 COLOR app.mainColor
@@ -306,30 +360,110 @@ rol = 0
 yaw = 0
 c = 0
 cc = 4
-t = 0
+T = 0
 
-DrawP1XLogo
+lineColorStart = 80
+lineColor = lineColorStart
+sfx.bank = 5
+sfx.length = 10
+sfx.speed = 1 / 2
+ENDINTRO = -1
 
 DO
     g$ = INKEY$
    
-    t = t + .05
- 
-    IF t MOD 1 = 0 THEN fxNoise
+    T = T + .0333
    
+    fxASCIINoise
+    HandleSound
+  
+    COLOR app.mainColor
+    SELECT CASE INT(T)
+      CASE 2
+        LOCATE 3, 2
+        PRINT "P1X PRESENTS";
+        PlaySound
+      CASE 6
+        LOCATE 6, 2
+        PRINT "STORY DRIVEN";
+        LOCATE 7, 2
+        PRINT "GAME INTERPRETER";
+        PlaySound
+      CASE 10
+        LOCATE 9, 2
+        PRINT "BEHIND";
+        PlaySound
+      CASE 14
+        LOCATE 12, 2
+        PRINT "UNTITLED GAME";
+        LOCATE 13, 2
+        PRINT "=============";
+        PlaySound
+      CASE 18
+        LOCATE 15, 2
+        PRINT "ONLY FOR";
+        LOCATE 16, 2
+        PRINT "MS DOS";
+        PlaySound
+
+      CASE 22
+        LOCATE 19, 2
+        PRINT "RUN FROM A:..";
+        LOCATE 20, 2
+        PRINT "1.44MB FLOPPY!";
+        PlaySound
+   
+      CASE 26
+        PlaySound
+
+      CASE 27
+        LOCATE 3, 2
+        PRINT "GREETZ";
+        LOCATE 4, 2
+        PRINT "TO";
+        PlaySound
+  
+      CASE 30
+        LOCATE 7, 2
+        PRINT CHR$(3) + " MONIS";
+        PlaySound
+     
+      CASE 34
+        LOCATE 13, 2
+        PRINT "P1X TEAM";
+        PlaySound
+
+      CASE 38
+        LOCATE 19, 2
+        PRINT "BEFFIO TEAM";
+        PlaySound
+
+      CASE 42
+        PlaySound
+
+      CASE 46
+        ENDINTRO = 1
+   
+    END SELECT
+
+    IF T > 26 AND T < 42 THEN
+      DrawP1XLogo T
+    END IF
+
+  WAIT &H3DA, 8
     FOR i = 1 TO 12
     FOR j = 1 TO 5
-      LINE (col(surf(i, j)), row(surf(i, j)))-(col(surf(i, j + 1)), row(surf(i, j + 1))), app.bgColor
+      LINE (col(surf(i, j)), row(surf(i, j)))-(col(surf(i, j + 1)), row(surf(i, j + 1))), 0
     NEXT j
     NEXT i
     
-    pitch = pitch + COS(t * .1) * 6
+    pitch = pitch + COS(T * .1) * 6
     IF pitch > 360 THEN pitch = 0
 
-    yaw = yaw + SIN(5 + t * .1) * 6
+    yaw = yaw + SIN(5 + T * .1) * 6
     IF yaw > 360 THEN yaw = 0
 
-    rol = rol + SIN(t * .1) * 6
+    rol = rol + SIN(T * .1) * 6
     IF rol > 360 THEN rol = 0
 
     FOR i = 1 TO 20
@@ -346,9 +480,9 @@ DO
       yr3 = SIN(rol * PI / 180) * xr2 + COS(rol * PI / 180) * yr2
       zr3 = zr2
 
-      x1 = xr3 - SIN(t) * 1.5 + xa
-      y1 = yr3 - COS(t * 1.2) * 2 + ya
-      z1 = zr3 - SIN(t * .75) * 12 + za
+      x1 = xr3 - SIN(T) * 1.5 + xa
+      y1 = yr3 - COS(T * 1.2) * 2 + ya
+      z1 = zr3 - SIN(T * .75) * 12 + za
 
       x2 = x1
       y2 = z1
@@ -385,14 +519,16 @@ DO
       IF row(i) > 199 THEN row(i) = 200
     NEXT i
 
+                 
     FOR i = 1 TO 12
     FOR j = 1 TO 5
-      LINE (col(surf(i, j)), row(surf(i, j)))-(col(surf(i, j + 1)), row(surf(i, j + 1))), 15
+      LINE (col(surf(i, j)), row(surf(i, j)))-(col(surf(i, j + 1)), row(surf(i, j + 1))), app.secondaryColor
     NEXT j
     NEXT i
 
     WAIT &H3DA, 8
-  LOOP UNTIL g$ <> ""
+    
+  LOOP UNTIL g$ <> "" OR ENDINTRO = 1
 
   app.state = STATEMENU
   cnc.cmd = "JMP"
@@ -409,13 +545,13 @@ END SUB
 
 SUB DrawMenu (position)
 
-  COLOR app.mainColor
+  COLOR app.secondaryColor
   menuX = 15
   menuY = app.centerY
   menuInit = 0
   IF app.scene = 1 THEN menuInit = 1
 
-  FOR i = menuInit TO 3
+  FOR i = menuInit TO 4
     LOCATE menuY + i, menuX
     IF i = position THEN
       PRINT "-" + CHR$(16);
@@ -435,6 +571,8 @@ SUB DrawMenu (position)
         PRINT CHR$(22);
       END IF
     CASE 3
+      PRINT "PALETTE";
+    CASE 4
       PRINT "QUIT";
     END SELECT
 
@@ -445,13 +583,14 @@ SUB DrawMenu (position)
     END IF
  
   NEXT i
+  COLOR app.mainColor
+  LOCATE 24, 3
+  PRINT "2021 by Krzysztof Krystian Jankowski";
 
-  LOCATE 22, 3
-  PRINT "2021 by Krzysztof Krystian Jankowski"
 
 END SUB
 
-SUB DrawP1XLogo
+SUB DrawP1XLogo (T)
 
   COLOR 0
  
@@ -462,7 +601,11 @@ SUB DrawP1XLogo
   FOR y = 1 TO 22
   FOR x = 1 TO 16
     LOCATE posy + y, posx + x
-    IF sprite(x, y) = 1 THEN PRINT CHR$(219);
+    IF sprite(x, y) = 1 THEN
+      charColor = 80 + (7 + COS(3 * T + x * y) * 7)
+      COLOR charColor
+      PRINT CHR$(219);
+    END IF
   NEXT x
   NEXT y
 
@@ -470,10 +613,40 @@ SUB DrawP1XLogo
 
 END SUB
 
-SUB DrawScene
-               
+SUB DrawPalette
+COLOR app.mainColor
+  PRINT
+  FOR i = 1 TO 40
+    PRINT CHR$(220);
+  NEXT i
+  PRINT
+  PRINT
 
-  DrawTopBar
+  FOR i = 0 TO 255
+    IF i > 0 AND i MOD 16 = 0 THEN
+      COLOR 15
+      PRINT STR$(i - 16) + " ->" + STR$(i - 1)
+    END IF
+    COLOR i
+    PRINT CHR$(219);
+  NEXT
+  COLOR app.mainColor
+  PRINT
+  FOR i = 1 TO 40
+    PRINT CHR$(220);
+  NEXT i
+  PRINT
+  PRINT
+
+
+  cnc.cmd = "JMP"
+  SLEEP
+
+END SUB
+
+SUB DrawScene
+  CLS
+  PAINT (1, 1), 200
   ' Set main message
   msg$ = cnc.msg
 
@@ -486,7 +659,7 @@ SUB DrawScene
   ' If question command then ask for input
   IF cnc.cmd = "QST" THEN
     PlaySound
-    GetUserAnswer
+    HandleUserAnswer
   ELSE
     ' Set next scene number
     cnc.JMP = cnc.jmp1
@@ -498,7 +671,7 @@ SUB DrawTopBar
   COLOR app.mainColor
   DrawCustomLine 1, 0, 40, 177
   LOCATE 1, 2
-  PRINT "SDGI / V." + STR$(app.version)
+  PRINT "SDGI / V." + STR$(app.version);
   DrawCustomLine 2, 0, 40, 205
 
 END SUB
@@ -507,7 +680,7 @@ SUB DrawWindow (title$, msg$)
        
   COLOR app.mainColor
   ptr = 1
-  maxWindowWidth = app.cols - 6
+  maxWindowWidth = app.cols - 8
 
   ' Trim the message and questions of empty space at the end
   TrimMsg msg$
@@ -522,12 +695,11 @@ SUB DrawWindow (title$, msg$)
   END IF
 
   ' Calculate size of the box
-  w = 5 + LEN(msg$)
-  IF w > maxWindowWidth THEN w = maxWindowWidth
-  IF w < 5 THEN w = 5
-  rows = w - 5
-  max = (LEN(msg$) / rows)
-  h = INT(max + 5)
+  w = maxWindowWidth
+  maxColumns = w
+  max = 4
+  h = INT(max + 6)
+
   IF cnc.cmd = "QST" THEN
     h = h + 3
     IF cnc.jmp3 > 0 THEN h = h + 1
@@ -536,48 +708,58 @@ SUB DrawWindow (title$, msg$)
   ' Get center position of the window
   posx = INT((app.cols - w) / 2)
   posy = INT((app.rows - h) / 2)
+  cx = app.maxWidth / 2
+  cy = app.maxHeight / 2
+  pw = w * (320 / 39)
+  ph = h * (200 / 23)
+  hpw = pw * .5
+  hph = ph * .5
 
   ' Draw background box
-  FOR x = 1 TO w
-  FOR y = 1 TO h
-    LOCATE posy + y, posx + x
-    PRINT CHR$(177);
-    LOCATE posy + y, posx + x
-    IF y = 1 THEN
-      IF x = 1 THEN PRINT CHR$(218);
-      IF x > 1 AND x < w THEN PRINT CHR$(196);
-      IF x = w THEN PRINT CHR$(191);
-    END IF
-    IF y > 1 AND y < h THEN
-      IF x = w - 1 THEN
-        PRINT " ";
-      ELSE
-        IF x = 1 OR x = w THEN PRINT CHR$(179);
+  shadowX = 1
+  shadowY = 2
+  LINE (cx - hpw + shadowX, cy - hph + shadowY)-(cx + hpw + shadowX, cy + hph + shadowY), 18, BF
+ 
+  LINE (cx - hpw, cy - hph)-(cx + hpw, cy + hph), 22, BF
+  LINE (cx - hpw, cy - hph)-(cx + hpw, cy + hph), 30, B
+ 
+  LINE (cx - hpw, cy + hph - 24)-(cx + hpw, cy + hph), 15, BF
+  LINE (cx - hpw + 4, cy + hph - 20)-(cx + hpw - 4, cy + hph - 4), 16, BF
+
+  FOR j = 1 TO ph - 24 STEP 2
+  LINE (cx - hpw + 1, cy - hph + j)-(cx + hpw - 1, cy - hph + j), 191
+  NEXT j
+
+  ' Draw message in lines with word-wrap
+  row = 0
+  ptr = 1
+  lastLine = -1
+    
+  DO
+    w$ = ""
+    endCol = -1
+    FOR j = 0 TO maxColumns
+      IF endCol < 0 THEN
+        n$ = MID$(msg$, ptr + j, 1)
+        
+        IF n$ <> " " AND n$ <> "" AND j < maxColumns THEN
+          w$ = w$ + n$
+        ELSE
+          IF j + LEN(w$) <= maxColumns AND LEN(w$) > 0 THEN
+            LOCATE posy + 2 + row, posx + 2 + j - LEN(w$)
+            PRINT w$ + " ";
+          ELSE
+            overflow = overflow + LEN(w$)
+            endCol = 1
+            row = row + 1
+            ptr = ptr + j - LEN(w$)
+          END IF
+          w$ = ""
+        END IF
       END IF
-    END IF
-    IF y = h THEN
-            IF x = 1 THEN PRINT CHR$(192);
-            IF x > 1 AND x < w THEN PRINT CHR$(196);
-            IF x = w THEN PRINT CHR$(217);
-    END IF
-  NEXT y
-  NEXT x
-
-  ' Draw title of the window
-  LOCATE posy + 1, posx + 2
-  COLOR app.secondaryColor
-  PRINT title$
-
-  ' Draw message in lines
-  FOR i = 0 TO max
-    LOCATE posy + 3 + i, posx + 3
-    IF i < max THEN
-      PRINT MID$(msg$, ptr, rows);
-      ptr = ptr + rows
-    ELSE
-      PRINT MID$(msg$, ptr, max MOD rows);
-    END IF
-  NEXT i
+    NEXT j
+  LOOP UNTIL ptr > LEN(msg$)
+  
 
   ' Draw questions
   IF cnc.cmd = "QST" THEN
@@ -592,18 +774,32 @@ SUB DrawWindow (title$, msg$)
  
   END IF
 
-
   ' Draw bottom message if needed
   SELECT CASE cnc.cmd
     CASE "QST"
-      LOCATE posy + h, posx + (w / 2) - 4
-      PRINT "[ CHOOSE ]";
+      LOCATE posy + h, posx + 2
+      PRINT "CHOOSE PATH AND PRESS ENTER";
     CASE "JMP"
 
     CASE ELSE
-      LOCATE posy + h, posx + (w / 2) - 3
-      PRINT "[ OK ]";
+      LOCATE posy + h, posx + 2
+      PRINT "PRESS ENTER TO CONTINUE";
   END SELECT
+
+END SUB
+
+SUB fxASCIINoise
+
+
+  FOR i = 0 TO 8
+    x = 1 + INT(RND * app.cols)
+    y = 1 + INT(RND * app.rows)
+   
+    LOCATE y, x
+    COLOR 192 + RND * 7
+    PRINT CHR$(chars(INT(RND * 8)));
+  NEXT i
+
 
 END SUB
 
@@ -614,9 +810,12 @@ SUB fxFall
   l = 12
   top = 12
           
-  S = RND(1)
-  FOR y = top TO h STEP 8 + S
-  FOR x = 0 TO w STEP 4 + S
+  s = RND(1)
+ 
+  FOR iter = 0 TO 128
+    x = RND(1) * w
+    y = RND(1) * h
+          
     IF RND(1) < .5 THEN
       DEF SEG = &HA000
       LET c = PEEK((y * 320&) + x)
@@ -629,39 +828,146 @@ SUB fxFall
       END IF
       DEF SEG
     END IF
-  NEXT x
-  NEXT y
+  NEXT iter
+  'NEXT x
+  'NEXT y
 
 END SUB
 
-SUB fxNoise
+SUB fxNoise (T)
 
   w = 320
   h = 200
 
-  FOR y = 0 TO h STEP 4
-  FOR x = 0 TO w STEP 2
+  FOR i = 0 TO 64
+    x = RND(1) * w
+    y = RND(1) * h
+    
     DEF SEG = &HA000
-    yy = y
-    IF RND(1) > .5 THEN yy = y + 2
-    POKE ((yy * 320&) + x), RND(1)
+    POKE ((y * 320&) + x), 96 + SIN(T * .1) * 7
     DEF SEG
-  NEXT x
-  NEXT y
+  NEXT i
+END SUB
+
+SUB HandleMenu
+
+initPos = 0
+maxPos = 4
+IF app.scene = 1 THEN initPos = 1
+position = initPos
+
+DrawMenu initPos
+DrawFakeRoom 0, 0, initPos
+T = 0
+DO
+  ' Read user keyboard input
+  g$ = INKEY$
+  DrawFakeRoom 0, T, position
+  WAIT &H3DA, 8
+ 
+  SELECT CASE RIGHT$(g$, 1)
+  CASE "H"
+    IF position > initPos THEN
+      position = position - 1
+    END IF
+    PlayMenuSound
+  CASE "P"
+    IF position < maxPos THEN
+      position = position + 1
+    END IF
+    PlayMenuSound
+  END SELECT
+  T = T + .1
+  DrawFakeRoom 170, T, position
+  DrawMenu position
+  WAIT &H3DA, 8
+LOOP UNTIL g$ = CHR$(13)
+
+SELECT CASE position
+  CASE 0
+  app.state = STATEGAME
+  sfx.bank = 0
+  sfx.length = 5
+ 
+  DrawBackground 176
+ 
+  CASE 1
+  sfx.bank = 0
+  sfx.length = 5
+
+  app.scene = 1
+  app.state = STATEGAME
+  DrawBackground 176
+ 
+  CASE 2
+  app.soundEnabled = app.soundEnabled * -1
+  
+  CASE 3
+  app.state = STATEMENU
+  DrawPalette
+
+  CASE 4
+  app.state = STATEQUIT
+END SELECT
+cnc.cmd = "JMP"
 
 END SUB
 
-SUB GetUserAnswer
+SUB HandleSound
+  IF app.soundEnabled > 0 THEN
+    IF sfx.note > sfx.bank THEN
+      SOUND sounds(sfx.bank + sfx.note), sfx.speed
+      sfx.note = sfx.note - 1
+    END IF
+  END IF
+END SUB
+
+SUB HandleState
+
+  SELECT CASE app.state
+  CASE STATEINTRO
+    CLS
+    DrawIntro
+
+  CASE STATEMENU
+    CLS
+    DrawTopBar
+    HandleMenu
+
+  CASE STATEGAME
+    CLS
+    ReadScriptScene
+    DrawScene
+    DrawTopBar
+    DrawBottomBar
+    SaveGame
+
+    ' Increate turn counter but not for jump comands
+    IF cnc.cmd <> "JMP" AND cnc.cmd <> "END" THEN
+      cnc.turn = cnc.turn + 1
+    END IF
+
+    app.scene = cnc.JMP
+
+  CASE STATEPALETTE
+    CLS
+    DrawPalette
+
+  END SELECT
+END SUB
+
+SUB HandleUserAnswer
 LET cursor = 1
 LET maxPos = 2
 IF cnc.jmp3 > 0 THEN maxPos = 3
-
+DrawTopBar
+DrawBottomBar
 
 DO
   ans$ = INKEY$
 
   FOR i = 1 TO maxPos
-    LOCATE app.qstPosY + i, app.qstPosX
+    LOCATE app.qstPosY + i, app.qstPosX + 1
     IF i = cursor THEN
       PRINT CHR$(16);
     ELSE
@@ -700,90 +1006,6 @@ LOOP UNTIL cnc.cmd = "JMP"
 
 END SUB
 
-SUB HandleMenu
-
-initPos = 0
-maxPos = 3
-IF app.scene = 1 THEN initPos = 1
-position = initPos
-
-DrawMenu initPos
-
-DO
-  ' Read user keyboard input
-  g$ = INKEY$
-
-  SELECT CASE RIGHT$(g$, 1)
-  CASE "H"
-    IF position > initPos THEN
-      position = position - 1
-    END IF
-    DrawMenu position
-    PlayMenuSound
-  CASE "P"
-    IF position < maxPos THEN
-      position = position + 1
-    END IF
-    DrawMenu position
-    PlayMenuSound
-  END SELECT
-LOOP UNTIL g$ = CHR$(13)
-
-SELECT CASE position
-  CASE 0
-  app.state = STATEGAME
-  DrawBackground 176
- 
-  CASE 1
-  app.scene = 1
-  app.state = STATEGAME
-  DrawBackground 176
- 
-  CASE 2
-  app.soundEnabled = app.soundEnabled * -1
-  
-  CASE 3
-  app.state = STATEQUIT
-END SELECT
-cnc.cmd = "JMP"
-
-END SUB
-
-SUB HandleSound
-  IF app.soundEnabled > 0 THEN
-    IF sfx.note > 0 THEN
-      SOUND sounds(sfx.bank + sfx.note), sfx.speed
-      sfx.note = sfx.note - 1
-    END IF
-  END IF
-END SUB
-
-SUB HandleTurn
-
-  SELECT CASE app.state
-  CASE STATEINTRO
-    DrawIntro
-
-  CASE STATEMENU
-    DrawTopBar
-    HandleMenu
-
-  CASE STATEGAME
-    ReadScriptScene
-    DrawScene
-    DrawBottomBar
-    SaveGame
-
-    ' Increate turn counter but not for jump comands
-    IF cnc.cmd <> "JMP" AND cnc.cmd <> "END" THEN
-      cnc.turn = cnc.turn + 1
-    END IF
-
-    app.scene = cnc.JMP
-
-  END SELECT
-END SUB
-
 SUB Init2DSprite
 
   FOR y = 1 TO 22
@@ -811,7 +1033,7 @@ END SUB
 SUB InitSound
        
   sfx.bank = 0
-  sfx.speed = 1 / 2
+  sfx.speed = 1 / 4
   sfx.length = 5
   sfx.note = 0
          
@@ -821,6 +1043,16 @@ SUB InitSound
   sounds(3) = 150
   sounds(4) = 100
 
+  sounds(5) = 100
+  sounds(6) = 200
+  sounds(7) = 300
+  sounds(8) = 400
+  sounds(9) = 250
+  sounds(10) = 300
+  sounds(12) = 360
+  sounds(13) = 340
+  sounds(14) = 330
+  sounds(15) = 300
 END SUB
 
 SUB PlayMenuSound
@@ -834,7 +1066,9 @@ END SUB
 SUB PlaySound
  
   bank = sfx.bank
-  RandomizeSound bank
+  IF app.state = STATEGAME THEN
+    RandomizeSound bank
+  END IF
   sfx.note = sfx.length
 
 END SUB
