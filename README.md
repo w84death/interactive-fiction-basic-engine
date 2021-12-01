@@ -5,7 +5,7 @@ Made on a real DOS maschine (MS DOS 5.5) in QuickBASIC 4.5.
 
 More about my [developer DOS setup here](https://bits.p1x.in/using-ms-dos-and-wordstar-in-2021/).
 
-My game engine for text-based (Interactive Fiction) games. It uses super simple script language for the gameplay logic (the story.)
+My game engine for [Interactive Fiction](https://en.wikipedia.org/wiki/Interactive_fiction), text-based games for DOS. It uses super simple script language for the gameplay logic (the story.)
 
 ## ChangeLog
 
