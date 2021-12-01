@@ -1,4 +1,4 @@
-# Interactive Fiction Basic Engine
+# Interactive Fiction BASIC Engine
 
 ![Cover image](signal-2021-06-26-223143.jpeg)
 Made on a real DOS maschine (MS DOS 5.5) in QuickBASIC 4.5.
