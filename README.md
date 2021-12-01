@@ -1,11 +1,11 @@
-# Story Driven Game Interpreter
+# Interactive Fiction Basic Engine
 
 ![Cover image](signal-2021-06-26-223143.jpeg)
-Made on MS DOS 5.5 in QuickBASIC 4.5
+Made on a real DOS maschine (MS DOS 5.5) in QuickBASIC 4.5.
 
 More about my [developer DOS setup here](https://bits.p1x.in/using-ms-dos-and-wordstar-in-2021/).
 
-My game engine for text-based games. It uses super simple script language for the gameplay logic.
+My game engine for text-based (Interactive Fiction) games. It uses super simple script language for the gameplay logic (the story.)
 
 ## ChangeLog
 
@@ -16,5 +16,7 @@ My game engine for text-based games. It uses super simple script language for th
 
 ## Planned
 
-- 7.0 - refactor draw window
+- 7.0 - rename, refactor draw window
 - 8.0 - window effects
+- 9.0
+- 10.0 - demo story that utilize all the engine features
