@@ -3,15 +3,19 @@ It's year 2042. You are in your apartment. The room is small. There is a compute
 MSG
 You put the floppy into the drive. Virus detected! Oh no! You need to act quickly.
 QST
-Aswer the question. Is this the best game ever?,Yes it is!,No,I don't know..,7,11,15
+Aswer the question. Is this the best game ever?,Yes it is!,No,I don't know..,7,11,19
 MSG
 You choosed Yes! This is the right answer. The virus was removed!
 JMP
-19
+23
 MSG
 You choosed No!
+HIT
+Virus hits the system!,2,6
+MSG
+You survived but that could be you last chance! Concentrate...
 JMP
-23
+27
 MSG
 You didn't know what to choose... Virus is still in the system.
 JMP
@@ -19,9 +23,9 @@ JMP
 MSG
 Congratulation! You win the game!
 JMP
-25
+29
 QST
-You lose... Do you want another chance?,Yes,No! Game sucks",,5,25,0
+You can try to answer again. This time think twice before another move. Do you want to handle the virus again?,Yes,No! Game sucks",,5,25,0
 END
 GAME OVER Thanks for playing the game :)
 
