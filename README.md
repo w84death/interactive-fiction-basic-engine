@@ -9,6 +9,17 @@ More about my [developer DOS setup here](https://bits.p1x.in/using-ms-dos-and-wo
 
 My game engine for [Interactive Fiction](https://en.wikipedia.org/wiki/Interactive_fiction), text-based games for DOS. It uses super simple script language for the gameplay logic (the story.)
 
+## Documentation
+
+Engine requies two files:
+- save.dat
+- script.dat
+
+In the <save.dat> file there needs to be two lines representing scene number 
+and player life.
+
+Most important file is <script.dat> that holds the whole story.
+
 ## ChangeLog
 
 - 1.0 - initial logic w/ scritp parser
@@ -22,3 +33,8 @@ My game engine for [Interactive Fiction](https://en.wikipedia.org/wiki/Interacti
 ## Planned
 
 - 10.0 - demo story that utilize all the engine features
+
+
+## Footer
+
+More info at https://bits.p1x.in and https://krzysztofjankowski.com.
