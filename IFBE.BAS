@@ -1,3 +1,4 @@
+DECLARE SUB InitPalette ()
 DECLARE SUB ResetGame ()
 DECLARE SUB HandleHit ()
 DECLARE SUB HandleState ()
@@ -43,7 +44,7 @@ DECLARE SUB DrawCustomLine (x!, y!, size!, char!)
 ' https://p1x.in
 '
 ' Unnamed Game Project
-' Version 9 - 5/12/2021
+' Version 9 - 25/12/2021
 ' -------------------------------------------------------------------- '
 
 
@@ -84,9 +85,9 @@ TYPE settings
 END TYPE
 DIM SHARED app AS settings
 app.version = 9
-app.bgColor = 3
-app.mainColor = 10
-app.secondaryColor = 11
+app.bgColor = 9
+app.mainColor = 15
+app.secondaryColor = 14
 app.startHP = 12
 app.scene = 1
 app.rows = 25
@@ -118,6 +119,12 @@ END TYPE
 DIM SHARED cnc AS command
 cnc.jmp = app.scene
 cnc.hp = 10
+
+' Graphics
+SCREEN 13
+InitPalette
+COLOR 0
+CLS
 
 ' Sound settings
 TYPE soundsystem
@@ -155,9 +162,6 @@ turnTimer = 1
 ' Start of the program
 ' -------------------------------------------------------------------- '
 
-SCREEN 13
-COLOR 0
-CLS
 CheckSaveGame
 
 ' Main loop
@@ -188,6 +192,27 @@ DO
 
         WAIT &H3DA, 8
 LOOP UNTIL g$ = CHR$(27) OR cnc.cmd = "END" OR app.state = STATEQUIT
+
+
+' DATA
+
+' ARNE 16 PALETTE
+DATA 00,00,00
+DATA 157,157,157
+DATA 255, 255, 255
+DATA 190, 38, 51
+DATA 224, 111, 139
+DATA 73, 60, 43
+DATA 164, 100, 34
+DATA 235, 137, 49
+DATA 247, 226, 107
+DATA 47, 72, 78
+DATA 68, 137, 26
+DATA 163, 206, 39
+DATA 27, 38, 50
+DATA 0, 87, 132
+DATA 49, 162, 242
+DATA 178, 220, 239
 
 ' 3D OBJRCT VERTS
 DATA  0.0000,-0.3568, 0.9342
@@ -278,15 +303,22 @@ SUB DrawBottomBar
  
   rows = app.rows
   cols = app.cols
+ 
+  LINE (48, app.maxHeight - 26)-(app.maxWidth - 48, app.maxHeight - 6), 12, BF
+  LINE (0, app.maxHeight - 6)-(app.maxWidth, app.maxHeight), 12, BF
 
-  LINE (0, app.maxHeight - 13)-(app.maxWidth, app.maxHeight - 13), 15
-
-  LINE (0, app.maxHeight - 12)-(app.maxWidth, app.maxHeight), 79, BF
-
-  LOCATE rows, 2
-  PRINT "TURN:" + STR$(cnc.turn);
-  LOCATE rows, cols - 6
-  PRINT "HP:" + STR$(cnc.hp);
+  COLOR 2
+  SELECT CASE cnc.cmd
+    CASE "QST"
+      LOCATE app.rows - 2, 9
+      PRINT "CHOOSE PATH USING ARROWS"
+      LOCATE app.rows - 1, 13
+      PRINT "AND PRESS ENTER";
+    CASE "JMP"
+    CASE ELSE
+      LOCATE app.rows - 1, 14
+      PRINT "PRESS ANY KEY";
+  END SELECT
 
 END SUB
 
@@ -372,7 +404,8 @@ yaw = 0
 c = 0
 cc = 4
 T = 0
-
+cols = app.cols
+middle = cols / 2 - 6
 lineColorStart = 80
 lineColor = lineColorStart
 sfx.bank = 5
@@ -398,29 +431,26 @@ DO
         LOCATE 6, 2
         PRINT "INTERACTIVE FICTION";
         LOCATE 7, 2
-        PRINT "BASIC ENGINE";
+        PRINT "BASIC ENGINE 2022";
         PlaySound
       CASE 10
         LOCATE 9, 2
-        PRINT "...";
+        PRINT "POWERING THE GAME...";
         PlaySound
       CASE 14
-        LOCATE 12, 2
+        LOCATE 12, middle
         PRINT "MISSING FLOPPY";
-        LOCATE 13, 2
+        LOCATE 13, cols / 2 - 6
         PRINT "==============";
         PlaySound
       CASE 18
-        LOCATE 15, 2
-        PRINT "ONLY FOR";
-        LOCATE 16, 2
-        PRINT "MS DOS";
+        LOCATE 15, middle
+        PRINT "ONLY FOR MS DOS";
         PlaySound
-
       CASE 22
-        LOCATE 19, 2
-        PRINT "RUN FROM A:..";
-        LOCATE 20, 2
+        LOCATE 19, middle
+        PRINT "RUN FROM A:.. ";
+        LOCATE 20, middle
         PRINT "1.44MB FLOPPY!";
         PlaySound
    
@@ -428,24 +458,24 @@ DO
         PlaySound
 
       CASE 27
-        LOCATE 3, 2
+        LOCATE 3, cols - 6
         PRINT "GREETZ";
-        LOCATE 4, 2
+        LOCATE 4, cols - 2
         PRINT "TO";
         PlaySound
   
       CASE 30
-        LOCATE 7, 2
+        LOCATE 7, cols - 7
         PRINT CHR$(3) + " MONIS";
         PlaySound
      
       CASE 34
-        LOCATE 13, 2
+        LOCATE 13, cols - 8
         PRINT "P1X TEAM";
         PlaySound
 
       CASE 38
-        LOCATE 19, 2
+        LOCATE 19, cols - 11
         PRINT "BEFFIO TEAM";
         PlaySound
 
@@ -519,27 +549,8 @@ DO
       'IF z6 > -fog + 1 THEN lineColor(i) = 7
       'IF z6 > -fog + 15 THEN lineColor(i) = 15
     
-      u = x6 / z6 * d
-      V = y6 / z6 * d
-
-      col(i) = 160 + K * u
-      IF col(i) < 0 THEN col(i) = 0
-      IF col(i) > 319 THEN col(i) = 320
-      row(i) = 100 - K * V
-      IF row(i) < 0 THEN row(i) = 0
-      IF row(i) > 199 THEN row(i) = 200
-    NEXT i
-
-                 
-    FOR i = 1 TO 12
-    FOR j = 1 TO 5
-      LINE (col(surf(i, j)), row(surf(i, j)))-(col(surf(i, j + 1)), row(surf(i, j + 1))), app.secondaryColor
-    NEXT j
-    NEXT i
-
-    WAIT &H3DA, 8
-    
-  LOOP UNTIL g$ <> "" OR ENDINTRO = 1
+      u = x6 / z6 M T\MTCP\WINSCONFIG=WIN COMSPEC=C:\COMMAND.COM PROMPT=$e[1;34m$t $b $e[1;32m$p$g $e[0;47;0m PATH=C:\DOS;D:\APPS\QB45;D:\APPS\NC;D:\APPS\WORDSTAR;C:\NET\ETH;C:\NET\MTCP TEMP=C:\TEMP DIRCMD=/o:gne windir=C:\WINDOWS   C:\WINDOWS\system\KRNL386.EXE »ëºÜ¸Zî‘rKRNL386 Í ÿž šðþð8ÿ
+ÿUµ­ ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¯ (!    Îÿÿÿÿ                  Í!Ë                                              WINDOWSPAGE SELECT=85252) C:\DOS\EGA.CPI)TAR;C:\NET\ETH;C:\NET\MTCP                                        1
 
   app.state = STATEMENU
   cnc.cmd = "JMP"
@@ -695,12 +706,37 @@ SUB DrawScene
 END SUB
 
 SUB DrawTopBar
- 
-  LINE (0, 0)-(app.maxWidth, 10), 79, BF
-  LINE (0, 11)-(app.maxWidth, 11), 0
-  LOCATE 1, 2
-  PRINT "SDGI / V." + STR$(app.version);
 
+  rows = app.rows
+  cols = app.cols
+  endLineName = app.maxWidth
+  endLineTurn = app.maxWidth - 74
+  CONST lineHeight = 10
+  CONST colorName = 10
+  CONST colorTurn = 11
+  CONST colorHP = 3
+
+
+  IF app.state = STATEGAME THEN
+    endLineName = app.maxWidth - 148
+  END IF
+
+  LINE (0, 0)-(endLineName, lineHeight), colorName, BF
+  COLOR colorName + 1
+  LOCATE 1, 2
+  PRINT "IFBE / V." + STR$(app.version);
+
+  IF app.state = STATEGAME THEN
+    LINE (endLineName, 0)-(endLineTurn, lineHeight), colorTurn, BF
+    COLOR colorTurn
+    LOCATE 1, cols - 16
+    PRINT "TURN:" + STR$(cnc.turn);
+   
+    LINE (endLineTurn, 0)-(app.maxWidth, lineHeight), colorHP, BF
+    COLOR colorHP
+    LOCATE 1, cols - 6
+    PRINT "HP:" + STR$(cnc.hp);
+  END IF
 END SUB
 
 SUB DrawWindow (title$, MSG$)
@@ -767,7 +803,7 @@ SUB DrawWindow (title$, MSG$)
   filledLines = curLine
 
   ' Set minimum window height
-  h = filledLines + 6
+  h = filledLines + 2
 
   ' Add space for questions
   IF cnc.cmd = CMDQST THEN
@@ -791,16 +827,13 @@ SUB DrawWindow (title$, MSG$)
   ' Draw background box
   shadowX = 1
   shadowY = 2
-  LINE (cx - hpw + shadowX, cy - hph + shadowY)-(cx + hpw + shadowX, cy + hph + shadowY), 18, BF
+  LINE (cx - hpw + shadowX, cy - hph + shadowY)-(cx + hpw + shadowX, cy + hph + shadowY), 12, BF
  
-  LINE (cx - hpw, cy - hph)-(cx + hpw, cy + hph), 22, BF
-  LINE (cx - hpw, cy - hph)-(cx + hpw, cy + hph), 30, B
+  LINE (cx - hpw, cy - hph)-(cx + hpw, cy + hph), 14, BF
+  LINE (cx - hpw, cy - hph)-(cx + hpw, cy + hph), 15, B
  
-  LINE (cx - hpw, cy + hph - 24)-(cx + hpw, cy + hph), 15, BF
-  LINE (cx - hpw + 4, cy + hph - 20)-(cx + hpw - 4, cy + hph - 4), 16, BF
-
-  FOR j = 1 TO ph - 24 STEP 2
-  LINE (cx - hpw + 1, cy - hph + j)-(cx + hpw - 1, cy - hph + j), 191
+  FOR j = 1 TO ph STEP 2
+    LINE (cx - hpw + 1, cy - hph + j)-(cx + hpw - 1, cy - hph + j), 12
   NEXT j
 
 
@@ -829,16 +862,7 @@ SUB DrawWindow (title$, MSG$)
   END IF
 
   ' Draw bottom message if needed
-  SELECT CASE cnc.cmd
-    CASE "QST"
-      LOCATE posy + h, posx + 2
-      PRINT "CHOOSE PATH AND PRESS ENTER";
-    CASE "JMP"
-
-    CASE ELSE
-      LOCATE posy + h, posx + 2
-      PRINT "PRESS ENTER TO CONTINUE";
-  END SELECT
+  ' Moved to the DrawBottomBar SUB
 
 END SUB
 
@@ -915,93 +939,9 @@ SUB HandleHit
   PRINT "ROLL --> " + STR$(roll) + "pts";
  
   cnc.hp = cnc.hp - roll
-  LOCATE app.qstPosY + 3, app.qstPosX + 1
-  PRINT "You lost " + STR$(roll) + " Hit Points.";
-  LOCATE app.qstPosY + 4, app.qstPosX + 1
-  IF cnc.hp > 0 THEN
-    PRINT "You still have " + STR$(cnc.hp) + "HP";
-    SaveGame
-  ELSE
-    PRINT "You have died.";
-    cnc.cmd = CMDJMP
-    cnc.jmp1 = 1
-    ResetGame
-  END IF
-   
-  SLEEP
-
-END SUB
-
-SUB HandleMenu
-
-initPos = 0
-maxPos = 4
-IF app.scene = 1 THEN initPos = 1
-position = initPos
-
-DrawMenu initPos
-DrawFakeRoom 0, 0, initPos
-T = 0
-DO
-  ' Read user keyboard input
-  g$ = INKEY$
-  DrawFakeRoom 0, T, position
-  WAIT &H3DA, 8
- 
-  SELECT CASE RIGHT$(g$, 1)
-  CASE "H"
-    IF position > initPos THEN
-      position = position - 1
-    END IF
-    PlayMenuSound
-  CASE "P"
-    IF position < maxPos THEN
-      position = position + 1
-    END IF
-    PlayMenuSound
-  END SELECT
-  T = T + .1
-  DrawFakeRoom 170, T, position
-  DrawMenu position
-  WAIT &H3DA, 8
-LOOP UNTIL g$ = CHR$(13)
-
-SELECT CASE position
-  CASE 0
-  app.state = STATEGAME
-  sfx.bank = 0
-  sfx.length = 5
- 
-  DrawBackground 176
- 
-  CASE 1
-  sfx.bank = 0
-  sfx.length = 5
-
-  app.scene = 1
-  cnc.hp = app.startHP
-  app.state = STATEGAME
-  DrawBackground 176
- 
-  CASE 2
-  app.soundEnabled = app.soundEnabled * -1
-  
-  CASE 3
-  app.state = STATEMENU
-  DrawPalette
-
-  CASE 4
-  app.state = STATEQUIT
-END SELECT
-cnc.cmd = "JMP"
-
-END SUB
-
-SUB HandleSound
-  IF app.soundEnabled > 0 THEN
-    IF sfx.note > sfx.bank THEN
-      SOUND sounds(sfx.bank + sfx.note), sfx.speed
-      sfx.note = sfx.note - 1
+  LOCATE app.qstPM T\MTCP\WINSCONFIG=WIN COMSPEC=C:\COMMAND.COM PROMPT=$e[1;34m$t $b $e[1;32m$p$g $e[0;47;0m PATH=C:\DOS;D:\APPS\QB45;D:\APPS\NC;D:\APPS\WORDSTAR;C:\NET\ETH;C:\NET\MTCP TEMP=C:\TEMP DIRCMD=/o:gne windir=C:\WINDOWS   C:\WINDOWS\system\KRNL386.EXE »ëºÜ¸Zî‘rKRNL386 Í ÿž šðþð8ÿ
+ÿUµ­ ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¯ (!    Îÿÿÿÿ                  Í!Ë                                              WINDOWSPAGE SELECT=85252) C:\DOS\EGA.CPI)TAR;C:\NET\ETH;C:\NET\MTCP                                                     YW                                                                                                                                                                                                                                                                                                                                                                       2   ƒ”]    ‰  €¶6 € à € à    à      €  ß“RF2ÄðŠ  uÖä uÖuÖÜÕ	  w“RF2ÄðŠ  uÖä uÖuÖÜÕ	  w    ¥S! ÿ  À   U2    ~: ?   ~:°S‡08wþ0È	  @       DgÖ4 â  8wþ2œ!@€¼!@€    F   ; H   ;           PÄ>zÁàø&‹ÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌôÌô/Ï ò=çŸ*; H ; P; †;       ;  ;  ;  ;  ; | ; ê ; „; Š; ˆ; Œ; ŒØ.Ž0 ƒ> uú‰‰&¼ûŽØÃh èM“ëöŒØ.Ž0 ƒ> tèúŽ‹&ÿ6Ç  ûŽØÃ U‹ìhá ‹FèHZ]éÀ Ê U‹ìhõ ‹Fè4Z]é… Ê U‹ìh	‹Fè Z]éíÊ U‹ìh#‹Fè‹FèZ]é Ê U‹ìh=‹Fè ‹FèìZ]éù‡Ê U‹ìhW‹Fèæ‹FèÒZ]éh…¸ÿÿÊ U‹ìht‹FèÉ‹F
+èµZ]éªƒÊ U‹ìhˆ‹F= sfx.note - 1
     END IF
   END IF
 END SUB
@@ -1112,6 +1052,20 @@ SUB Init3DModel
   NEXT j
   NEXT i
 
+END SUB
+
+SUB InitPalette
+  FOR i = 0 TO 15
+    OUT &H3C8, i
+    READ r, g, B
+    r% = INT(r / 4)
+    g% = INT(g / 4)
+    B% = INT(B / 4)
+   
+    OUT &H3C9, r%
+    OUT &H3C9, g%
+    OUT &H3C9, B%
+  NEXT i
 END SUB
 
 SUB InitSound
