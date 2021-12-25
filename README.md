@@ -1,6 +1,8 @@
 # Interactive Fiction BASIC Engine
 
-![Cover image](signal-2021-06-26-223143.jpeg)
+![Menu](ifbe_09_menu.jpg)
+![Game](ifbe_09_game.jpg)
+
 Made on a real DOS maschine (MS DOS 5.5) in QuickBASIC 4.5.
 
 More about my [developer DOS setup here](https://bits.p1x.in/using-ms-dos-and-wordstar-in-2021/).
