@@ -1,7 +1,7 @@
 # Interactive Fiction BASIC Engine
 
-![Menu](ifbe_09_menu.jpg)
-![Game](ifbe_09_game.jpg)
+![Menu V9](ifbe_9_menu.jpg)
+![Game V9](ifbe_9_game.jpg)
 
 Made on a real DOS maschine (MS DOS 5.5) in QuickBASIC 4.5.
 
@@ -22,18 +22,20 @@ Most important file is <script.dat> that holds the whole story.
 
 ## ChangeLog
 
-- 1.0 - initial logic w/ scritp parser
-- 2.0 -> 4.0 - refctors, proper sound handling, menu
-- 5-0 - intro w/ 3D model, word-wrapping
-- 6.0 - optimalizations, color palette visualization
-- 7.0 - refactor draw window
-- 8.0 - ...
-- 9.0 - rename, custom arne 16 palette, layout cleanup
+- V1 - initial logic w/ scritp parser
+- V4 - refctors, proper sound handling, menu
+- V5 - intro w/ 3D model, word-wrapping
+- V6 - optimalizations, color palette visualization
+- V7 - refactor draw window
+- V9 - rename, custom arne 16 palette, layout cleanup
 
 ## Planned
 
-- 10.0 - demo story that utilize all the engine features
-
+- restore/create save.dat and script.dat
+- music refactor + new tunes
+- demo story that utilize all the engine features
+- story editor
+- sound editor/compositor 
 
 ## Footer
 
