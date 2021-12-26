@@ -1,7 +1,7 @@
 # Interactive Fiction BASIC Engine
 
-![Menu V9](ifbe_9_menu.jpg)
-![Game V9](ifbe_9_game.jpg)
+![Menu V9](media/ifbe_9_menu.jpg)
+![Game V9](media/ifbe_9_game.jpg)
 
 Made on a real DOS maschine (MS DOS 5.5) in QuickBASIC 4.5.
 
