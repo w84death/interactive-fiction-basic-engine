@@ -28,10 +28,10 @@ Most important file is <script.dat> that holds the whole story.
 - V6 - optimalizations, color palette visualization
 - V7 - refactor draw window
 - V9 - rename, custom arne 16 palette, layout cleanup
+- V10 - code refactor, restore/create save.dat and script.dat
 
 ## Planned
 
-- restore/create save.dat and script.dat
 - music refactor + new tunes
 - demo story that utilize all the engine features
 - story editor
