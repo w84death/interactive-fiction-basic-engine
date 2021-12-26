@@ -27,7 +27,7 @@ Most important file is <script.dat> that holds the whole story.
 - V5 - intro w/ 3D model, word-wrapping
 - V6 - optimalizations, color palette visualization
 - V7 - refactor draw window
-- V9 - rename, custom arne 16 palette, layout cleanup
+- V9 - rename, custom [arne 16 palette](http://androidarts.com/palette/16pal.htm), layout cleanup
 - V10 - code refactor, restore/create save.dat and script.dat
 
 ## Planned
